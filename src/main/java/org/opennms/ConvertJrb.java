@@ -1,7 +1,6 @@
 package org.opennms;
 
 import java.io.File;
-import java.util.Stack;
 
 public class ConvertJrb {
     private static final int m_statusThreadSleep = 1000;
@@ -10,10 +9,10 @@ public class ConvertJrb {
     private int m_fileCount = 0;
     private int m_filesConverted = 0;
 
-    private Stack<String> m_stack = new Stack<String>();
+    // private Stack<String> m_stack = new Stack<String>();
     private boolean m_searchDone = false;
 
-    private Thread[] m_threads = new Thread[m_threadCount];
+    private JrbToXml[] m_threads = new JrbToXml[m_threadCount];
 
     private String m_path;
 
@@ -33,17 +32,13 @@ public class ConvertJrb {
                 search(file.getAbsolutePath());
             } else {
                 if (file.getName().endsWith(".jrb")) {
-                    m_stack.push(file.getAbsolutePath().substring(0, file.getAbsolutePath().length() - 4));
+                    m_threads[m_fileCount % m_threadCount].add(file.getAbsolutePath().substring(0, file.getAbsolutePath().length() - 4));
                     m_fileCount++;
                 } else {
                     // ignore
                 }
             }
         }
-    }
-
-    public Stack<String> getStack() {
-        return m_stack;
     }
 
     public boolean searchDone() {
@@ -55,26 +50,25 @@ public class ConvertJrb {
 
 
         for (int i = 0; i < m_threadCount; i++) {
-            m_threads[i] = new Thread(new JrbToXml(this));
+            m_threads[i] = new JrbToXml(this);
             m_threads[i].start();
         }
 
         System.out.print(" done!\nSetting up status thread running every " + m_statusThreadSleep + " ms...");
 
         Thread t = new Thread(new Runnable() {
-            @Override
             public void run() {
-                while (!searchDone() || m_stack.size() > 0) {
+                while (!searchDone() || m_fileCount > m_filesConverted) {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
 
-                    System.out.println("search=" + (m_searchDone ? "finished" : "running") + ",found=" + m_fileCount + ", queued=" + m_stack.size() + ", converted=" + m_filesConverted);
+                    System.out.println("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
                     System.out.flush();
                 }
-                System.out.println("search=" + (m_searchDone ? "finished" : "running") + ",found=" + m_fileCount + ", queued=" + m_stack.size() + ", converted=" + m_filesConverted);
+                System.out.println("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
                 System.out.flush();
             }
         });
@@ -86,6 +80,10 @@ public class ConvertJrb {
         search(m_path);
 
         m_searchDone = true;
+
+        for (int i = 0; i < m_threadCount; i++) {
+            m_threads[i].close();
+        }
     }
 
     public static void main(String args[]) {

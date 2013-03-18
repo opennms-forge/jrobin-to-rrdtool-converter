@@ -7,16 +7,28 @@ import org.jrobin.core.RrdException;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Stack;
 
-public class JrbToXml implements Runnable {
+
+public class JrbToXml extends Thread {
     private static boolean rrdDbPoolUsed = true;
     private ConvertJrb m_convertJrb;
+    private Stack<String> m_stack = new Stack<String>();
+    private boolean stackClosed = false;
 
     public JrbToXml(ConvertJrb convertJrb) {
         m_convertJrb = convertJrb;
     }
 
-    static RrdDb getRrdDbReference(String path) throws IOException, RrdException {
+    public void close() {
+        stackClosed = true;
+    }
+
+    public void add(String path) {
+        m_stack.add(path);
+    }
+
+    private RrdDb getRrdDbReference(String path) throws IOException, RrdException {
         if (rrdDbPoolUsed) {
             return RrdDbPool.getInstance().requestRrdDb(path);
         } else {
@@ -37,7 +49,7 @@ public class JrbToXml implements Runnable {
         }
     }
 
-    static void releaseRrdDbReference(RrdDb rrdDb) throws IOException, RrdException {
+    private void releaseRrdDbReference(RrdDb rrdDb) throws IOException, RrdException {
         if (rrdDbPoolUsed) {
             RrdDbPool.getInstance().release(rrdDb);
         } else {
@@ -45,31 +57,17 @@ public class JrbToXml implements Runnable {
         }
     }
 
-    @Override
     public void run() {
-        int size = m_convertJrb.getStack().size();
-
-        while (size > 0 || !m_convertJrb.searchDone()) {
-
-            String path = null;
-
-            synchronized (m_convertJrb) {
-                size = m_convertJrb.getStack().size();
-
-                if (size > 0) {
-                    path = m_convertJrb.getStack().pop();
-                }
-            }
-
-            if (path != null) {
+        while (!stackClosed) {
+            while (!m_stack.empty()) {
                 try {
-                    convert(path);
+                    convert(m_stack.pop());
+                    m_convertJrb.increaseConvertedFiles();
                 } catch (RrdException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                m_convertJrb.increaseConvertedFiles();
             }
         }
     }
