@@ -4,7 +4,7 @@ import java.io.File;
 
 public class ConvertJrb {
     private static final int m_statusThreadSleep = 1000;
-    private static final int m_threadCount = 4;
+    private static final int m_threadCount = 8;
 
     private int m_fileCount = 0;
     private int m_filesConverted = 0;
@@ -65,11 +65,21 @@ public class ConvertJrb {
                         e.printStackTrace();
                     }
 
-                    System.out.println("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
-                    System.out.flush();
+                    System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
+
+                    for (int i = 0; i < m_threadCount; i++) {
+                        System.out.print(", #" + i + "=" + m_threads[i].size());
+                    }
+
+                    System.out.println();
                 }
-                System.out.println("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
-                System.out.flush();
+                System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
+
+                for (int i = 0; i < m_threadCount; i++) {
+                    System.out.print(", #" + i + "=" + m_threads[i].size());
+                }
+
+                System.out.println();
             }
         });
 

@@ -7,13 +7,14 @@ import org.jrobin.core.RrdException;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Stack;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class JrbToXml extends Thread {
     private static boolean rrdDbPoolUsed = true;
     private ConvertJrb m_convertJrb;
-    private Stack<String> m_stack = new Stack<String>();
+    private Queue<String> m_stack = new ConcurrentLinkedQueue<String>();
     private boolean stackClosed = false;
 
     public JrbToXml(ConvertJrb convertJrb) {
@@ -34,6 +35,10 @@ public class JrbToXml extends Thread {
         } else {
             return new RrdDb(path);
         }
+    }
+
+    public int size() {
+        return m_stack.size();
     }
 
     public void convert(String path) throws RrdException, IOException {
@@ -59,9 +64,9 @@ public class JrbToXml extends Thread {
 
     public void run() {
         while (!stackClosed) {
-            while (!m_stack.empty()) {
+            while (!m_stack.isEmpty()) {
                 try {
-                    convert(m_stack.pop());
+                    convert(m_stack.poll());
                     m_convertJrb.increaseConvertedFiles();
                 } catch (RrdException e) {
                     e.printStackTrace();
