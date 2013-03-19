@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class JrbToXml extends Thread {
     private static boolean rrdDbPoolUsed = true;
     private ConvertJrb m_convertJrb;
-    private Queue<String> m_stack = new ConcurrentLinkedQueue<String>();
+    private Queue<String> m_queue = new ConcurrentLinkedQueue<String>();
     private boolean stackClosed = false;
 
     public JrbToXml(ConvertJrb convertJrb) {
@@ -26,7 +26,7 @@ public class JrbToXml extends Thread {
     }
 
     public void add(String path) {
-        m_stack.add(path);
+        m_queue.add(path);
     }
 
     private RrdDb getRrdDbReference(String path) throws IOException, RrdException {
@@ -38,7 +38,7 @@ public class JrbToXml extends Thread {
     }
 
     public int size() {
-        return m_stack.size();
+        return m_queue.size();
     }
 
     public void convert(String path) throws RrdException, IOException {
@@ -64,9 +64,9 @@ public class JrbToXml extends Thread {
 
     public void run() {
         while (!stackClosed) {
-            while (!m_stack.isEmpty()) {
+            while (!m_queue.isEmpty()) {
                 try {
-                    convert(m_stack.poll());
+                    convert(m_queue.poll());
                     m_convertJrb.increaseConvertedFiles();
                 } catch (RrdException e) {
                     e.printStackTrace();

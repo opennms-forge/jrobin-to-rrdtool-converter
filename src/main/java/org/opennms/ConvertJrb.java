@@ -8,8 +8,8 @@ public class ConvertJrb {
 
     private int m_fileCount = 0;
     private int m_filesConverted = 0;
+    private int m_oldFilesConverted = 0;
 
-    // private Stack<String> m_stack = new Stack<String>();
     private boolean m_searchDone = false;
 
     private JrbToXml[] m_threads = new JrbToXml[m_threadCount];
@@ -65,15 +65,19 @@ public class ConvertJrb {
                         e.printStackTrace();
                     }
 
-                    System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
+                    double convertedPerSecond = (m_filesConverted - m_oldFilesConverted);
+
+                    m_oldFilesConverted = m_filesConverted;
+
+                    System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_oldFilesConverted) + ", converted=" + m_oldFilesConverted);
 
                     for (int i = 0; i < m_threadCount; i++) {
                         System.out.print(", #" + i + "=" + m_threads[i].size());
                     }
 
-                    System.out.println();
+                    System.out.println(", delta=" + convertedPerSecond);
                 }
-                System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_filesConverted);
+                System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_oldFilesConverted);
 
                 for (int i = 0; i < m_threadCount; i++) {
                     System.out.print(", #" + i + "=" + m_threads[i].size());
