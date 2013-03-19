@@ -4,9 +4,10 @@ import org.jrobin.core.RrdDb;
 import org.jrobin.core.RrdDbPool;
 import org.jrobin.core.RrdException;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -45,10 +46,17 @@ public class JrbToXml extends Thread {
         RrdDb rrdDb = getRrdDbReference(path + ".jrb");
 
         try {
+            /*
             String xml = rrdDb.getXml();
             BufferedWriter out = new BufferedWriter(new FileWriter(path + ".xml"), xml.length());
             out.write(xml);
             out.close();
+            */
+            byte[] buf = rrdDb.getXml().getBytes();
+            FileChannel writeChannel = new RandomAccessFile(path + ".xml", "rw").getChannel();
+            ByteBuffer wrBuf = writeChannel.map(FileChannel.MapMode.READ_WRITE, 0, buf.length);
+            wrBuf.put(buf);
+            writeChannel.close();
         } finally {
             releaseRrdDbReference(rrdDb);
         }
