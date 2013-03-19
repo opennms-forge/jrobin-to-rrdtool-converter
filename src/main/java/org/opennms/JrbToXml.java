@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class JrbToXml extends Thread {
-    private static boolean rrdDbPoolUsed = true;
+    private static boolean rrdDbPoolUsed = false;
     private ConvertJrb m_convertJrb;
     private Queue<String> m_queue = new ConcurrentLinkedQueue<String>();
     private boolean stackClosed = false;
