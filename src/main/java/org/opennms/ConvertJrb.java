@@ -94,7 +94,7 @@ public class ConvertJrb {
                         e.printStackTrace();
                     }
 
-                    double convertedPerSecond = (m_filesConverted - m_oldFilesConverted);
+                    int convertedPerSecond = (m_filesConverted - m_oldFilesConverted);
 
                     m_oldFilesConverted = m_filesConverted;
 
