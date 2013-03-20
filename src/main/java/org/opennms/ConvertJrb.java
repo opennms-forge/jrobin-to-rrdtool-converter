@@ -1,23 +1,34 @@
 package org.opennms;
 
+import org.apache.commons.cli.*;
+
 import java.io.File;
+import java.io.PrintWriter;
+import java.util.List;
 
 public class ConvertJrb {
+    public static final int DEFAULT_THREADS = 4;
+    public static final String DEFAULT_RRDTOOL = "/usr/local/bin/rrdtool";
+
     private static final int m_statusThreadSleep = 1000;
-    private static final int m_threadCount = 8;
+    private int m_threadCount = 8;
 
     private int m_fileCount = 0;
     private int m_filesConverted = 0;
     private int m_oldFilesConverted = 0;
 
+    private String m_rrdTool;
+
     private boolean m_searchDone = false;
 
-    private JrbToXml[] m_threads = new JrbToXml[m_threadCount];
+    private JrbToXml[] m_threads;
 
     private String m_path;
 
-    public ConvertJrb(String path) {
+    public ConvertJrb(String path, String rrdTool, int threadCount) {
         m_path = path;
+        m_threadCount = threadCount;
+        m_rrdTool = rrdTool;
     }
 
     public void increaseConvertedFiles() {
@@ -45,9 +56,16 @@ public class ConvertJrb {
         return m_searchDone;
     }
 
+    public String getRrrTool() {
+        return m_rrdTool;
+    }
+
     private void runConversion() {
+        System.out.println("Using rrdtool '" + m_rrdTool + "'...");
+
         System.out.print("Setting up " + m_threadCount + " converter thread(s)...");
 
+        m_threads = new JrbToXml[m_threadCount];
 
         for (int i = 0; i < m_threadCount; i++) {
             m_threads[i] = new JrbToXml(this);
@@ -100,13 +118,65 @@ public class ConvertJrb {
         }
     }
 
-    public static void main(String args[]) {
-
-        if (args.length != 1) {
-            System.out.println("Usage: ConvertJrb <search-path>");
-        } else {
-            ConvertJrb convertJrb = new ConvertJrb(args[0]);
-            convertJrb.runConversion();
+    private static void usage(final Options options, final CommandLine cmd, final String error, final Exception e) {
+        final HelpFormatter formatter = new HelpFormatter();
+        final PrintWriter pw = new PrintWriter(System.out);
+        if (error != null) {
+            pw.println("An error occurred: " + error + "\n");
         }
+
+        formatter.printHelp("Usage: ConvertJrb <path>", options);
+
+        if (e != null) {
+            pw.println(e.getMessage());
+            e.printStackTrace(pw);
+        }
+
+        pw.close();
+    }
+
+    private static void usage(final Options options, final CommandLine cmd) {
+        usage(options, cmd, null, null);
+    }
+
+    public static void main(String args[]) throws ParseException {
+
+        String rrdTool = DEFAULT_RRDTOOL;
+        int threadCount = DEFAULT_THREADS;
+        String path = "./";
+
+        final Options options = new Options();
+
+        options.addOption("rrdtool", true, "set rrdtool to use for converting Xml to Rrd, default: '" + DEFAULT_RRDTOOL + "'");
+        options.addOption("threads", true, "set number of threads to use, default: " + DEFAULT_THREADS);
+
+        final CommandLineParser parser = new PosixParser();
+        final CommandLine cmd = parser.parse(options, args);
+
+        @SuppressWarnings("unchecked")
+        List<String> arguments = (List<String>) cmd.getArgList();
+
+        if (arguments.size() < 1) {
+            usage(options, cmd);
+            System.exit(1);
+        }
+
+        if (cmd.hasOption("rrdtool")) {
+            rrdTool = cmd.getOptionValue("rrdtool");
+        }
+
+        if (cmd.hasOption("threads")) {
+            try {
+                threadCount = Integer.valueOf(cmd.getOptionValue("threads"));
+            } catch (NumberFormatException numberFormatException) {
+                usage(options, cmd);
+                System.exit(1);
+            }
+        }
+
+        path = arguments.remove(0);
+
+        ConvertJrb convertJrb = new ConvertJrb(path, rrdTool, threadCount);
+        convertJrb.runConversion();
     }
 }

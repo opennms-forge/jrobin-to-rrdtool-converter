@@ -14,29 +14,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-   <repositories>
-    <repository>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>${updatePolicy}</updatePolicy>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-        <updatePolicy>${updatePolicy}</updatePolicy>
-      </releases>
-      <id>opennms-snapshots</id>
-      <name>OpenNMS Maven Snapshot Repository</name>
-      <url>http://maven.opennms.org/content/groups/opennms.org-snapshot</url>
-    </repository>
-   </repositories>
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>${updatePolicy}</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+                <updatePolicy>${updatePolicy}</updatePolicy>
+            </releases>
+            <id>opennms-snapshots</id>
+            <name>OpenNMS Maven Snapshot Repository</name>
+            <url>http://maven.opennms.org/content/groups/opennms.org-snapshot</url>
+        </repository>
+    </repositories>
 
     <dependencies>
-    <dependency>
-      <groupId>org.jrobin</groupId>
-      <artifactId>jrobin</artifactId>
-      <version>1.5.15-SNAPSHOT</version>
-    </dependency>
-
+        <dependency>
+            <groupId>org.jrobin</groupId>
+            <artifactId>jrobin</artifactId>
+            <version>1.5.15-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-cli</groupId>
+            <artifactId>commons-cli</artifactId>
+            <version>1.2</version>
+        </dependency>
     </dependencies>
 
     <build>

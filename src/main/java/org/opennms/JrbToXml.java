@@ -16,14 +16,16 @@ public class JrbToXml extends Thread {
     private static boolean rrdDbPoolUsed = false;
     private ConvertJrb m_convertJrb;
     private Queue<String> m_queue = new ConcurrentLinkedQueue<String>();
-    private boolean stackClosed = false;
+    private boolean queueClosed = false;
+    private String m_rrdTool;
 
     public JrbToXml(ConvertJrb convertJrb) {
         m_convertJrb = convertJrb;
+        m_rrdTool = convertJrb.getRrrTool();
     }
 
     public void close() {
-        stackClosed = true;
+        queueClosed = true;
     }
 
     public void add(String path) {
@@ -38,20 +40,34 @@ public class JrbToXml extends Thread {
         }
     }
 
+    private RrdDb getRrdDbReference(String path, String xmlPath) throws IOException, RrdException, RrdException {
+        if (rrdDbPoolUsed) {
+            return RrdDbPool.getInstance().requestRrdDb(path, xmlPath);
+        } else {
+            return new RrdDb(path, xmlPath);
+        }
+    }
+
     public int size() {
         return m_queue.size();
     }
 
-    public void convert(String path) throws RrdException, IOException {
+    public void convertToRrd(String path) throws RrdException, IOException, RrdException {
+        String xmlPath = path + ".xml";
+        String rrdPath = path + ".rrd";
+
+        Process p = Runtime.getRuntime().exec(m_rrdTool + " restore " + xmlPath + " " + rrdPath);
+        try {
+            p.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void convertToXml(String path) throws RrdException, IOException {
         RrdDb rrdDb = getRrdDbReference(path + ".jrb");
 
         try {
-            /*
-            String xml = rrdDb.getXml();
-            BufferedWriter out = new BufferedWriter(new FileWriter(path + ".xml"), xml.length());
-            out.write(xml);
-            out.close();
-            */
             byte[] buf = rrdDb.getXml().getBytes();
             FileChannel writeChannel = new RandomAccessFile(path + ".xml", "rw").getChannel();
             ByteBuffer wrBuf = writeChannel.map(FileChannel.MapMode.READ_WRITE, 0, buf.length);
@@ -71,10 +87,14 @@ public class JrbToXml extends Thread {
     }
 
     public void run() {
-        while (!stackClosed) {
+        while (!queueClosed || !m_queue.isEmpty()) {
             while (!m_queue.isEmpty()) {
                 try {
-                    convert(m_queue.poll());
+                    String path = m_queue.poll();
+
+                    convertToXml(path);
+                    convertToRrd(path);
+
                     m_convertJrb.increaseConvertedFiles();
                 } catch (RrdException e) {
                     e.printStackTrace();
