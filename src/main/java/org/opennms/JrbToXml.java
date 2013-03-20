@@ -52,7 +52,7 @@ public class JrbToXml extends Thread {
         return m_queue.size();
     }
 
-    public void convertToRrd(String path) throws RrdException, IOException, RrdException {
+    public void convertToRrd(String path) throws IOException, RrdException {
         String xmlPath = path + ".xml";
         String rrdPath = path + ".rrd";
 
