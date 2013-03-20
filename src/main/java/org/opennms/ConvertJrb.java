@@ -4,7 +4,10 @@ import org.apache.commons.cli.*;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ConvertJrb {
     public static final int DEFAULT_THREADS = 4;
@@ -15,6 +18,7 @@ public class ConvertJrb {
 
     private int m_fileCount = 0;
     private int m_filesConverted = 0;
+    private int m_skippedFiles = 0;
     private int m_oldFilesConverted = 0;
 
     private String m_rrdTool;
@@ -37,14 +41,21 @@ public class ConvertJrb {
 
     private void search(String path) {
         File directory = new File(path);
-        File[] files = directory.listFiles();
-        for (File file : files) {
+        Set<File> fileSet = new TreeSet<File>();
+        Collections.addAll(fileSet, directory.listFiles());
+
+        for (File file : fileSet) {
             if (file.isDirectory()) {
                 search(file.getAbsolutePath());
             } else {
                 if (file.getName().endsWith(".jrb")) {
-                    m_threads[m_fileCount % m_threadCount].add(file.getAbsolutePath().substring(0, file.getAbsolutePath().length() - 4));
-                    m_fileCount++;
+                    String filename = file.getAbsolutePath().substring(0, file.getAbsolutePath().length() - 4);
+                    if (fileSet.contains(new File(filename + ".xml")) && fileSet.contains(new File(filename + ".rrd"))) {
+                        m_skippedFiles++;
+                    } else {
+                        m_threads[m_fileCount % m_threadCount].add(filename);
+                        m_fileCount++;
+                    }
                 } else {
                     // ignore
                 }
@@ -87,7 +98,7 @@ public class ConvertJrb {
 
                     m_oldFilesConverted = m_filesConverted;
 
-                    System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_oldFilesConverted) + ", converted=" + m_oldFilesConverted);
+                    System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", skipped=" + m_skippedFiles + ", queued=" + (m_fileCount - m_oldFilesConverted) + ", converted=" + m_oldFilesConverted);
 
                     for (int i = 0; i < m_threadCount; i++) {
                         System.out.print(", #" + i + "=" + m_threads[i].size());
@@ -95,13 +106,7 @@ public class ConvertJrb {
 
                     System.out.println(", delta=" + convertedPerSecond);
                 }
-                System.out.print("search=" + (m_searchDone ? "finished" : "running") + ", found=" + m_fileCount + ", queued=" + (m_fileCount - m_filesConverted) + ", converted=" + m_oldFilesConverted);
-
-                for (int i = 0; i < m_threadCount; i++) {
-                    System.out.print(", #" + i + "=" + m_threads[i].size());
-                }
-
-                System.out.println();
+                System.out.println("Finished!\n");
             }
         });
 
