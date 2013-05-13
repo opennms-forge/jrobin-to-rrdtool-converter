@@ -35,7 +35,7 @@ public class ConvertJrb {
         m_rrdTool = rrdTool;
     }
 
-    public void increaseConvertedFiles() {
+    public synchronized void increaseConvertedFiles() {
         m_filesConverted++;
     }
 
@@ -88,6 +88,9 @@ public class ConvertJrb {
         Thread t = new Thread(new Runnable() {
             public void run() {
                 while (!searchDone() || m_fileCount > m_filesConverted) {
+                    //System.out.println("m_fileCount="+m_fileCount);
+                    //System.out.println("m_filesConverted="+m_filesConverted);
+                    //System.out.println("searchDone()="+searchDone());
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
