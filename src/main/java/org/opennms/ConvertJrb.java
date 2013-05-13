@@ -72,6 +72,10 @@ public class ConvertJrb {
     }
 
     private void runConversion() {
+        if (!(new File(m_rrdTool)).isFile()) {
+            System.out.println("rrdtool '" + m_rrdTool + "' not found!");
+            return;
+        }
         System.out.println("Using rrdtool '" + m_rrdTool + "'...");
 
         System.out.print("Setting up " + m_threadCount + " converter thread(s)...");
