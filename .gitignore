@@ -1,4 +1,11 @@
-*.iws
-*.iml
-*.ipr
+.idea/
+*.class
 target/
+# Package Files #
+*.jar
+*.war
+*.ear
+*.iml
+**/*nbactions.xml
+*.iws
+*.ipr
