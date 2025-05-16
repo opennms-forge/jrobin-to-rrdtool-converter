@@ -16,6 +16,7 @@ PATCH_VERSION       := $(shell echo $(RELEASE_VERSION) | cut -d. -f3)
 SNAPSHOT_VERSION    := $(MAJOR_VERSION).$(MINOR_VERSION).$(shell expr $(PATCH_VERSION) + 1)-SNAPSHOT
 RELEASE_LOG         := $(ARTIFACTS_DIR)/release.log
 OK                  := "[ 👍 ]"
+CONTAINER_TAG       := docker.io/opennms/jrb2rrd:${VERSION}
 
 .PHONY: help
 help:
@@ -49,6 +50,12 @@ deps-build:
 	@mvn validate > /dev/null
 	@echo $(OK)
 
+.PHONY: deps-docker
+deps-docker:
+	@echo -n "👮‍♀️ Check Docker exists:         "
+	@command -v docker > /dev/null
+	@echo $(OK)
+
 .PHONY: jrobin-to-rrdtool
 jrobin-to-rrdtool: deps-build
 	mvn install assembly:single
@@ -64,6 +71,10 @@ collect-artifacts:
 	shasum -a 256 -b $(ARTIFACTS_DIR)/convertjrb-$(VERSION)-jar-with-dependencies.jar > $(ARTIFACTS_DIR)/shasum256.txt
 	cd $(ARTIFACTS_DIR); tar czf convertjrb-$(VERSION).tar.gz convertjrb-$(VERSION)-jar-with-dependencies.jar shasum256.txt
 	shasum -a 256 -b $(ARTIFACTS_DIR)/convertjrb-$(VERSION).tar.gz > $(ARTIFACTS_DIR)/convertjrb-$(VERSION).sha256
+
+.PHONY: oci
+oci: deps-docker
+	docker build -t $(CONTAINER_TAG) .
 
 .PHONY: release
 release: deps-build

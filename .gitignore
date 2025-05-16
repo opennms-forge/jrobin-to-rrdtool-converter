@@ -9,3 +9,4 @@ target/
 **/*nbactions.xml
 *.iws
 *.ipr
+*.versionsBackup
