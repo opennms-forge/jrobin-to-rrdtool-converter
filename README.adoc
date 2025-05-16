@@ -8,7 +8,7 @@ IMPORTANT: It is not possible to convert from different OpenNMS storage strategi
            It is also *not* possible to change internal RRD data structure i.e. 'RRA' or 'step'.
            The 'RRA' configuration in JRobin and RRDtool *must* be the same.
 
-== Reqirements
+== Requirements
 
 This tool has the following requirements
 
